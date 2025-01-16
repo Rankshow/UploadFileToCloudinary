@@ -11,7 +11,7 @@ namespace UploadFileToCloudinary.Controllers
     [ApiController]
     public class DocumentController : ControllerBase
     {
-        readonly ICloudinaryService _cloudinaryService;
+        readonly ICloudStorageService _cloudinaryService;
         readonly IAzureBlobStorageService _blobStorageService;
 
         /// <summary>
@@ -19,7 +19,7 @@ namespace UploadFileToCloudinary.Controllers
         /// </summary>
         /// <param name="cloudinaryService">The service for managing documents in Cloudinary.</param>
         /// <param name="blobStorageService">The service for handling Azure Blob Storage operations.</param>
-        public DocumentController(ICloudinaryService cloudinaryService, IAzureBlobStorageService blobStorageService)
+        public DocumentController(ICloudStorageService cloudinaryService, IAzureBlobStorageService blobStorageService)
         {
             _cloudinaryService = cloudinaryService;
             _blobStorageService = blobStorageService;

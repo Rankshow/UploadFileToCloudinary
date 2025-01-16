@@ -3,29 +3,46 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Azure;
 
-internal static class AzureClientFactoryBuilderExtensions
+namespace UploadFileToCloudinary.Extensions
 {
-    public static IAzureClientBuilder<BlobServiceClient, BlobClientOptions> AddBlobServiceClient(this AzureClientFactoryBuilder builder, string serviceUriOrConnectionString, bool preferMsi)
+    internal static class AzureClientFactoryBuilderExtensions
     {
-        if (preferMsi && Uri.TryCreate(serviceUriOrConnectionString, UriKind.Absolute, out Uri? serviceUri))
+        /// <summary>
+        /// Adds a BlobServiceClient to the Azure Client Factory.
+        /// Allows using either a service URI (for MSI) or a connection string.
+        /// </summary>
+        public static IAzureClientBuilder<BlobServiceClient, BlobClientOptions> AddBlobServiceClient(
+            this AzureClientFactoryBuilder builder,
+            string serviceUriOrConnectionString,
+            bool preferMsi)
         {
-            return builder.AddBlobServiceClient(serviceUri);
+            if (preferMsi && Uri.TryCreate(serviceUriOrConnectionString, UriKind.Absolute, out Uri? serviceUri))
+            {
+                return builder.AddBlobServiceClient(serviceUri);
+            }
+            else
+            {
+                return builder.AddBlobServiceClient(serviceUriOrConnectionString);
+            }
         }
-        else
-        {
-            return builder.AddBlobServiceClient(serviceUriOrConnectionString);
-        }
-    }
 
-    public static IAzureClientBuilder<QueueServiceClient, QueueClientOptions> AddQueueServiceClient(this AzureClientFactoryBuilder builder, string serviceUriOrConnectionString, bool preferMsi)
-    {
-        if (preferMsi && Uri.TryCreate(serviceUriOrConnectionString, UriKind.Absolute, out Uri? serviceUri))
+        /// <summary>
+        /// Adds a QueueServiceClient to the Azure Client Factory.
+        /// Allows using either a service URI (for MSI) or a connection string.
+        /// </summary>
+        public static IAzureClientBuilder<QueueServiceClient, QueueClientOptions> AddQueueServiceClient(
+            this AzureClientFactoryBuilder builder,
+            string serviceUriOrConnectionString,
+            bool preferMsi)
         {
-            return builder.AddQueueServiceClient(serviceUri);
-        }
-        else
-        {
-            return builder.AddQueueServiceClient(serviceUriOrConnectionString);
+            if (preferMsi && Uri.TryCreate(serviceUriOrConnectionString, UriKind.Absolute, out Uri? serviceUri))
+            {
+                return builder.AddQueueServiceClient(serviceUri);
+            }
+            else
+            {
+                return builder.AddQueueServiceClient(serviceUriOrConnectionString);
+            }
         }
     }
 }

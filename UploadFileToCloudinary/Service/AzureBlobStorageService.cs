@@ -1,51 +1,48 @@
-﻿using Azure.Storage.Blobs;
-using UploadFileToCloudinary.Interface;
+﻿using Azure.Core.Extensions;
+using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
+using Microsoft.Extensions.Azure;
 
-namespace UploadFileToCloudinary.Servicel;
-
-public class AzureBlobStorageService : IAzureBlobStorageService
+namespace UploadFileToCloudinary.Extensions
 {
-    private readonly BlobContainerClient _blobContainerClient;
-
-    public AzureBlobStorageService(IConfiguration configuration)
+    internal static class AzureClientFactoryBuilderExtensions
     {
-        string connectionString = configuration["AzureBlobStorage:ConnectionString"]!;
-        string containerName = configuration["AzureBlobStorage:ContainerName"]!;
-        _blobContainerClient = new BlobContainerClient(connectionString, containerName);
-    }
-
-    public async Task<string> UploadFileAsync(IFormFile file, string directory)
-    {
-        string blobName = $"{directory}/{file.FileName}";
-        BlobClient blobClient = _blobContainerClient.GetBlobClient(blobName);
-
-        using (var stream = file.OpenReadStream())
+        /// <summary>
+        /// Adds a BlobServiceClient to the Azure Client Factory.
+        /// Allows using either a service URI (for MSI) or a connection string.
+        /// </summary>
+        public static IAzureClientBuilder<BlobServiceClient, BlobClientOptions> AddBlobServiceClient(
+            this AzureClientFactoryBuilder builder,
+            string serviceUriOrConnectionString,
+            bool preferMsi)
         {
-            await blobClient.UploadAsync(stream, overwrite: true);
-        }
-
-        return blobClient.Uri.ToString();
-    }
-
-    public async Task<bool> DeleteFileAsync(string blobName)
-    {
-        BlobClient blobClient = _blobContainerClient.GetBlobClient(blobName);
-        return await blobClient.DeleteIfExistsAsync();
-    }
-
-    public async Task<byte[]> DownloadFileAsync(string blobName)
-    {
-        BlobClient blobClient = _blobContainerClient.GetBlobClient(blobName);
-
-        if (await blobClient.ExistsAsync())
-        {
-            using (var ms = new MemoryStream())
+            if (preferMsi && Uri.TryCreate(serviceUriOrConnectionString, UriKind.Absolute, out Uri? serviceUri))
             {
-                await blobClient.DownloadToAsync(ms);
-                return ms.ToArray();
+                return builder.AddBlobServiceClient(serviceUri);
+            }
+            else
+            {
+                return builder.AddBlobServiceClient(serviceUriOrConnectionString);
             }
         }
 
-        return null;
+        /// <summary>
+        /// Adds a QueueServiceClient to the Azure Client Factory.
+        /// Allows using either a service URI (for MSI) or a connection string.
+        /// </summary>
+        public static IAzureClientBuilder<QueueServiceClient, QueueClientOptions> AddQueueServiceClient(
+            this AzureClientFactoryBuilder builder,
+            string serviceUriOrConnectionString,
+            bool preferMsi)
+        {
+            if (preferMsi && Uri.TryCreate(serviceUriOrConnectionString, UriKind.Absolute, out Uri? serviceUri))
+            {
+                return builder.AddQueueServiceClient(serviceUri);
+            }
+            else
+            {
+                return builder.AddQueueServiceClient(serviceUriOrConnectionString);
+            }
+        }
     }
 }

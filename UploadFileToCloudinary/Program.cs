@@ -1,18 +1,16 @@
 using CloudinaryDotNet;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using System.Configuration;
 using UploadFileToCloudinary;
 using UploadFileToCloudinary.Interface;
 using UploadFileToCloudinary.Service;
-using UploadFileToCloudinary.Servicel;
 using Microsoft.Extensions.Azure;
+using UploadFileToCloudinary.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.AddScoped<ICloudStorageService, CloudStorageService>();
 builder.Services.AddSingleton<IAzureBlobStorageService, AzureBlobStorageService>();
 
 
@@ -20,6 +18,15 @@ builder.Services.AddSingleton<IAzureBlobStorageService, AzureBlobStorageService>
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("CloudinarySettings")
 );
+
+builder.Services.AddAzureClients(clientBuilder =>
+{
+    string connectionString = builder.Configuration["AzureBlobStorage:ConnectionString"];
+    bool preferMsi = builder.Configuration.GetValue<bool>("AzureBlobStorage:UseManagedIdentity");
+
+    clientBuilder.AddBlobServiceClient(connectionString, preferMsi);
+});
+
 
 // Register Cloudinary instance and CloudinaryService
 builder.Services.AddSingleton(provider =>
